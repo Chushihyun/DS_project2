@@ -5,6 +5,16 @@
 //  Created by 朱世耘 on 2019/10/16.
 //  Copyright © 2019 sy_chu. All rights reserved.
 //
+// location:紀錄每個位置內容的type
+// A:整張地圖
+// input: row,column,energy_max
+// all:存所有location的array    all[0]為充電站
+// num:要走的location數量
+// undone:尚未走過的點
+// energy:當下剩餘電力
+// B:store all pairs distance
+
+// question:充電完出來位置？充電站需不需要走
 
 #include <iostream>
 #include <cstdlib>
@@ -20,6 +30,7 @@ class location{
     bool finish;// false = unfinish, true = finish
     int distance_charge;
     int distance_now;
+    int index;
     
     location(){}
     location(int a,int b){
@@ -51,6 +62,7 @@ void check_matrix(){
 
 location* all;
 int num=0;
+int undone;
 
 void check_location(){
     cout<<"x y done"<<endl;
@@ -62,8 +74,12 @@ void check_location(){
 
 //// all pair shortest path, collect in B[num+1][num+1]
 
+int** B;
 void calculate_distance(){
-    int B[num+1][num+1];
+    B=new int*[num+1];
+    for (int i=0; i<num+1; i++) {
+        B[i]=new int[num+1];
+    }
     for (int i=0; i<=num; i++) {
         for (int j=0; j<=num; j++) {
             if (i==j) {
@@ -87,16 +103,74 @@ void calculate_distance(){
             }
         }
     }
-    
-    
+// print B
+/*
     for (int i=0; i<=num; i++) {
         for (int j=0; j<=num; j++) {
             cout<<B[i][j]<<" ";
         }
         cout<<endl;
     }
+*/
+}
+
+location tmp;
+int energy;
+
+bool energy_left(){
+    if (energy==tmp.distance_charge) {
+        return false;
+    }
+    else{
+        return true;
+    }
+}
+
+int goal_index;
+
+void walk(int start,int end){
+    for (int i=0; i<=num; i++) {
+        all[i].distance_now = B[end][i];
+    }
+    
+    //keep find next,undone is better       if undone then go else 保留再看看
+    while (tmp.index!=end) {
+        <#statements#>
+    }
     
     
+    //if energy_left==0 then break
+    
+    
+}
+
+void go_near(){
+    for (int i=0; i<=num; i++) {
+        all[i].distance_now = all[i].distance_now - B[tmp.index][i];
+    }
+    
+    goal_index=0;
+    for (int i=0; i<=num; i++) {
+        if (all[i].distance_now>all[goal_index].distance_now) {
+            goal_index=i;
+        }
+    }
+    walk(tmp.index,goal_index);
+    
+}
+
+void go_farest(){
+    goal_index=0;
+    for (int i=0; i<=num; i++) {
+        if (all[i].distance_charge>all[goal_index].distance_charge) {
+            goal_index=i;
+        }
+    }
+    walk(0,goal_index);
+    
+}
+void comeback(){
+    walk(tmp.index, 0);
 }
 
 ///// main
@@ -133,24 +207,36 @@ int main() {
             if (A[x][y]==0) {
                 num++;
                 all[num]=location(x, y);
+                all[num].index=num;
             }
             else if (A[x][y]==2){
                 all[0]=location(x, y);
                 all[0].finish=true;
+                all[0].index=0;
             }
         }
     }
-    
-    check_location();
+    undone=num;
 
-    //calculate all relative distance
     calculate_distance();
+    // B[][] store all pairs distance
+    for (int i=0; i<=num; i++) {
+        all[i].distance_charge=B[0][i];
+    }
     
+    tmp=all[0];
+    while(undone>0){
+        //go_to_farest();
+        //come_back();
+        
+        
+        
+        
+    }
     //from the farest
+    
     //do second weighted_farest
     //if no_energy then return charge_point
-    
-    check_matrix();
     
     return 0;
 }
