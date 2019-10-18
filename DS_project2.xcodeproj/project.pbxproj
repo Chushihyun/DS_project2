@@ -25,6 +25,7 @@
 /* Begin PBXFileReference section */
 		AE0AFD6A2356F0550085C872 /* DS_project2 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DS_project2; sourceTree = BUILT_PRODUCTS_DIR; };
 		AE0AFD6D2356F0550085C872 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		AE0AFD742359A0980085C872 /* testcase.data */ = {isa = PBXFileReference; lastKnownFileType = text; name = testcase.data; path = "../../../../Library/Developer/Xcode/DerivedData/DS_project2-cyhzfuigxxabnwenfugpmtqdodmp/Build/Products/Debug/testcase.data"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,6 +44,7 @@
 			children = (
 				AE0AFD6C2356F0550085C872 /* DS_project2 */,
 				AE0AFD6B2356F0550085C872 /* Products */,
+				AE0AFD742359A0980085C872 /* testcase.data */,
 			);
 			sourceTree = "<group>";
 		};
