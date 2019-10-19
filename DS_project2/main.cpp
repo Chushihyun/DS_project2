@@ -53,6 +53,8 @@ void output_ans(){
 }
 
 // location:每個位置
+int energy;
+int undone;
 
 class location{
 public:
@@ -72,6 +74,10 @@ public:
     }
     void output(){
         cout<<"("<<x<<","<<y<<")"<<endl;
+    }
+    void show(){
+        cout<<"x = "<<x<<" ,y = "<<y<<endl;
+        cout<<"energy left = "<<energy<<", distance = "<<distance_charge<<", undone : "<<undone;
     }
 };
 
@@ -94,7 +100,6 @@ void check_matrix(){
 
 location* all;
 int num=0;
-int undone;
 
 void check_location(){
     cout<<"x y done"<<endl;
@@ -147,7 +152,6 @@ void calculate_distance(){
 }
 
 location tmp;
-int energy;
 
 bool energy_left(location a){
     if (energy<a.distance_charge) {
@@ -168,8 +172,12 @@ bool is_any_undone(){
 }
 
 int goal_index;
+bool next_is_charge;
+bool during_near;
 
 void walk(int start,int end){
+    next_is_charge=0;
+    // debug cout<<"start walk"<<endl;
     for (int i=0; i<=num; i++) {
         all[i].distance_now = B[end][i];
     }
@@ -179,13 +187,11 @@ void walk(int start,int end){
     bool check;
     for (int count= all[start].distance_now-1 ; count>=0; count--) {
         check=0;
-        ans_tmp->next=new ans(tmp.x,tmp.y);
+        ans_tmp->next=new ans(tmp.x,tmp.y);     // put location into ans[], and count ans_num
         ans_tmp=ans_tmp->next;
         ans_num++;
-        if (all[tmp.index].finish==0) {
-            all[tmp.index].finish=1;
-            undone--;
-        }
+        //check tmp status
+        // debug all[tmp.index].show(); cout<<" , direction : ("<<all[end].x<<","<<all[end].y<<")"<<endl;
         //find next
         for (int i=0; i<=num; i++) {
             if (all[i].distance_now==count) {
@@ -203,37 +209,61 @@ void walk(int start,int end){
         }
         energy--;
         tmp=all[next];
+        if (all[tmp.index].finish==0) {
+            all[tmp.index].finish=1;
+            undone--;
+        }
+        if (during_near==1) {
+            if (next==0) {
+                next_is_charge=1;
+                break;
+            }
+        }
+        
     }
+    // debug cout<<"end walk"<<endl;
 }
 
 void comeback(){
+    // debug cout<<"start come back"<<endl;
     walk(tmp.index, 0);
+    // debug cout<<"end come back"<<endl;
 }
 
 void go_near(){
-    for (int i=0; i<=num; i++) {
-        all[i].distance_now = all[i].distance_charge - B[tmp.index][i];
-    }
-    
+    // debug cout<<"start go near"<<endl;
     while (is_any_undone()==1) {
-        goal_index=tmp.index;
+        for (int i=0; i<=num; i++) {
+            all[i].distance_now = all[i].distance_charge - B[tmp.index][i];
+        }
+        goal_index=0;
         for (int i=0; i<=num; i++) {
             if(all[i].finish==0){
+                // debug cout<<"all[goal].distance_now =  "<<all[goal_index].distance_now<<endl;
+                // debug cout<<"all[i].distance_now =  "<<all[i].distance_now<<endl;
                 if (all[i].distance_now>all[goal_index].distance_now) {
-                    if(energy>=B[tmp.index][goal_index]+all[goal_index].distance_charge){
+                    if(energy>=B[tmp.index][i]+all[i].distance_charge){
                         goal_index=i;
+                        // debug cout<<"change goal into "<<i<<endl;
                     }
                 }
             }
         }
-        if (tmp.index==goal_index) {
+        // debug cout<<"tmp= "<<tmp.index<<" , goal= "<<goal_index<<endl;
+        if ((tmp.index==goal_index)||(goal_index==0)) {
             break;
         }
+        // debug cout<<"call walk"<<endl;
         walk(tmp.index,goal_index);
+        if (next_is_charge==1) {
+            break;
+        }
     }
+    // debug cout<<"end go near"<<endl;
 }
 
 void go_farest(){
+    // debug cout<<"start go farest"<<endl;
     goal_index=0;
     for (int i=0; i<=num; i++) {
         if (all[i].distance_charge>all[goal_index].distance_charge) {
@@ -243,6 +273,7 @@ void go_farest(){
         }
     }
     walk(0,goal_index);
+    // debug cout<<"end go farest"<<endl;
 }
 
 /////////////////// main
@@ -277,7 +308,7 @@ int main() {
     all=new location[row*column+1];
     
     for (int x=1; x<=column; x++) {
-        for (int y=1; y<row; y++) {
+        for (int y=1; y<=row; y++) {
             if (A[x][y]==0) {
                 num++;
                 all[num]=location(x, y);
@@ -292,6 +323,8 @@ int main() {
     }
     undone=num;
     
+    //check_matrix();
+    //check_location();
     // B[][] store all pairs distance
     calculate_distance();
     
@@ -305,7 +338,9 @@ int main() {
     
     while(undone>0){
         go_farest();
+        during_near=1;
         go_near();
+        during_near=0;
         comeback();
         energy=energy_max;
     }
