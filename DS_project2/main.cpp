@@ -337,6 +337,64 @@ void go_farest(){                                                   // debug cou
     walk(0,goal_index);                                                 // debug cout<<"end go farest"<<endl;
 }
 
+
+void big_walk(int start,int end){
+
+    for (int i=0; i<=num; i++) {
+        all[i].distance_now = B[end][i];
+    }
+    
+    //find next,undone is better
+    int next=tmp.index;
+    bool check;
+    for (int count= all[start].distance_now-1 ; count>=0; count--) {
+        check=0;
+        // put location into ans[], and count ans_num
+        ans_tmp->next=new ans(tmp.x,tmp.y);
+        ans_tmp=ans_tmp->next;
+        ans_num++;
+        //find next
+        for (int i=0; i<=num; i++) {
+            if (all[i].distance_now==count) {
+                if ( (abs(all[i].x-tmp.x) + abs(all[i].y-tmp.y)) ==1 ) {
+                    if (all[i].finish==0) {
+                        check=1;
+                        next=i;
+                    }
+                    else{
+                        next=i;
+                    }
+                }
+            }
+            if (check==1)  break;
+        }
+        tmp=all[next];
+        if (all[tmp.index].finish==0) {
+            all[tmp.index].finish=1;
+            undone--;
+        }
+    }                                       // debug cout<<"end walk"<<endl;
+}
+
+
+
+void big_comeback(){
+    big_walk(tmp.index, 0);
+}
+
+void big_go_farest(){
+    goal_index=0;
+    for (int i=0; i<=num; i++) {
+        if (all[i].distance_charge>all[goal_index].distance_charge) {
+            if (all[i].finish==0) {
+                goal_index=i;
+            }
+        }
+    }
+    big_walk(0,goal_index);                                                 // debug cout<<"end go farest"<<endl;
+}
+
+
 /////////////////// main
 
 int main() {
@@ -383,8 +441,7 @@ int main() {
         }
     }
     undone=num;                         //check_matrix();   //check_location();
-    
-    cout<<num<<endl;
+
     
     if (num<=1450) {
         // B[][] store all pairs distance
@@ -432,19 +489,18 @@ int main() {
         
         DFS(all[0].x,all[0].y);
         
-        check_matrix();
         
         all=new location[num+1];
         int e=0;
         
         for (int x=1; x<=column; x++) {
             for (int y=1; y<=row; y++) {
-                if (C[x][y].index==0) {
+                if (C[x][y].type==0) {
                     e++;
                     all[e]=C[x][y];
                     all[e].index=e;
                 }
-                else if (C[x][y].index==2){
+                else if (C[x][y].type==2){
                     all[0]=C[x][y];
                     all[0].finish=true;
                     all[0].index=0;
@@ -453,6 +509,15 @@ int main() {
         }
         
     // let's go
+        tmp=all[0];
+        
+        while(undone>0){
+            big_go_farest();
+            big_comeback();
+        }
+        // End
+        
+        output_ans();
         
     }
     return 0;
