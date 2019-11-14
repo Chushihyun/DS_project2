@@ -30,7 +30,7 @@ public:
     ans(int a,int b){
         x=a;
         y=b;
-        next=NULL;
+        next=nullptr;
     }
     ans(){}
     void output(){
@@ -70,16 +70,17 @@ public:
     int type;   //0:可走 1:不可走 2:充電站
     
     location(){}
+    
     location(int a,int b){
         x=a;
         y=b;
         finish=false;
     }
     
-    location(int a,int b,int type){
+    location(int a,int b,int c){
         x=a;
         y=b;
-        this->type=type;
+        this->type=c;
         distance_charge=-1;
         if (type==0) {
             finish=false;
@@ -87,6 +88,8 @@ public:
         else{
             finish=true;
         }
+        distance_now=-1;
+        index=-1;
     }
     void output(){
         cout<<"("<<x<<","<<y<<")"<<endl;
@@ -101,6 +104,7 @@ public:
 
 int** A;
 location** C;
+location** F;
 
 void check_matrix(){
     for (int m=row+1; m>=0; m--) {
@@ -170,6 +174,7 @@ void calculate_distance(){
 
 
 //queue
+
 class queue{
 public:
     location* E=new location[num+3];
@@ -189,43 +194,53 @@ public:
         E[now].show();
         return;
     }
+    queue(){}
 };
 
 int* D=new int[num+1];
 
 //single source shortest path by DFS
-void DFS(int x,int y){
-    queue q;
-    q.now=0;
-    q.amount=0;
-    q.push(C[x][y]);
+queue q[1];
+void DFS(int m,int n){
+    
+    //queue* q=new queue;
+    q[0].now=0;
+    q[0].amount=0;
+    q[0].push(C[m][n]);
     int distance=0;
-    C[x][y].distance_charge=distance;
+    C[m][n].distance_charge=distance;
     int count;
-    while (q.amount>0) {
-        count=q.amount;
+    while (q[0].amount>0) {
+        count=q[0].amount;
         distance++;
+        //cout<<endl<<"distance "<<distance<<":";
         for (int j=1; j<=count; j++) {
-            location v=q.pop();
-            if ((C[v.x+1][v.y].type!=1)&&(C[v.x+1][v.y].distance_charge==-1)) {
-                q.push(C[v.x+1][v.y]);
+            location v=q[0].pop();
+            if ((C[(v.x)+1][v.y].type!=1)&&(C[(v.x)+1][v.y].distance_charge==-1)) {
                 C[v.x+1][v.y].distance_charge=distance;
+                q[0].push(C[v.x+1][v.y]);
+                //cout<<"("<<v.x+1<<","<<v.y<<")";
             }
-            if ((C[v.x-1][v.y].type!=1)&&(C[v.x-1][v.y].distance_charge==-1)) {
-                q.push(C[v.x-1][v.y]);
+            if ((C[(v.x)-1][v.y].type!=1)&&(C[(v.x)-1][v.y].distance_charge==-1)) {
                 C[v.x-1][v.y].distance_charge=distance;
+                q[0].push(C[v.x-1][v.y]);
+                //cout<<"("<<v.x-1<<","<<v.y<<")";
             }
-            if ((C[v.x][v.y+1].type!=1)&&(C[v.x][v.y+1].distance_charge==-1)) {
-                q.push(C[v.x][v.y+1]);
+            if ((C[v.x][(v.y)+1].type!=1)&&(C[v.x][(v.y)+1].distance_charge==-1)) {
                 C[v.x][v.y+1].distance_charge=distance;
+                q[0].push(C[v.x][v.y+1]);
+                //cout<<"("<<v.x<<","<<v.y+1<<")";
             }
-            if ((C[v.x][v.y-1].type!=1)&&(C[v.x][v.y-1].distance_charge==-1)) {
-                q.push(C[v.x][v.y-1]);
+            if ((C[v.x][(v.y)-1].type!=1)&&(C[v.x][(v.y)-1].distance_charge==-1)) {
                 C[v.x][v.y-1].distance_charge=distance;
+                q[0].push(C[v.x][v.y-1]);
+                //cout<<"("<<v.x<<","<<v.y-1<<")";
             }
             //v旁邊還沒被加入的點push進去,amount++,distance=i
         }
+        //cout<<endl<<"now="<<q[0].now<<", amount"<<q[0].amount<<endl;
     }
+    //delete q;
     
 }
 void DFS_1(int i){
@@ -233,10 +248,23 @@ void DFS_1(int i){
     
     for (int y=row+1; y>=0; y--) {
         for (int x=0; x<column+2; x++) {
-            C[x][y]=location(x,y,A[x][y]);
+            /*
+            C[x][y].x=x;
+            C[x][y].y=y;
+            //cout<<endl<<x<<y<<A[x][y]<<endl;
+            C[x][y].type=A[x][y];
+            C[x][y].distance_charge=-1;
+            if (C[x][y].type==0) {
+                C[x][y].finish=false;
+            }
+            else{
+                C[x][y].finish=true;
+            }
+             */
+            C[x][y]=F[x][y];
         }
     }
-    
+    //check_matrix();
     DFS(all[i].x,all[i].y);
     
     for (int m=0; m<=num; m++) {
@@ -428,7 +456,7 @@ void big_go_farest(){
 
 int main() {
     
-    freopen("floor.data", "r", stdin);
+    freopen("testcase_big.data", "r", stdin);
     freopen("final.path", "w", stdout);
     cin>>row>>column>>energy_max;
     char input;
@@ -473,9 +501,18 @@ int main() {
     undone=num;
     //check_matrix();
     //check_location();
-    C =new location*[column+2];
-    for (int i=0; i<column+2; i++) {
-        C[i]=new location[row+2];
+    C =new location*[column+3];
+    for (int i=0; i<column+3; i++) {
+        C[i]=new location[row+3];
+    }
+    F =new location*[column+3];
+    for (int i=0; i<column+3; i++) {
+        F[i]=new location[row+3];
+    }
+    for (int y=row+1; y>=0; y--) {
+        for (int x=0; x<column+2; x++) {
+            F[x][y]=location(x,y,A[x][y]);
+        }
     }
     
     if (num<=14500) {
@@ -506,6 +543,7 @@ int main() {
         }
         else{
             output_ans();
+            cout<<"done"<<endl;
         }
     }
     else{
