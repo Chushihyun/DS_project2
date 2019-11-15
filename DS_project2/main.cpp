@@ -31,13 +31,13 @@ public:
         x=a;
         y=b;
     }
-    
+    ans(){}
     void output(){
         cout<<row-y<<" "<<x-1<<endl;
     }
 };
 
-ans* ans_first=new ans(-1,-1);
+ans* ans_first=new ans;
 ans* ans_tmp=ans_first;
 int ans_num=0;
 
@@ -69,17 +69,16 @@ public:
     int type;   //0:可走 1:不可走 2:充電站
     
     location(){}
-    
     location(int a,int b){
         x=a;
         y=b;
         finish=false;
     }
     
-    location(int a,int b,int c){
+    location(int a,int b,int type){
         x=a;
         y=b;
-        this->type=c;
+        this->type=type;
         distance_charge=-1;
         if (type==0) {
             finish=false;
@@ -87,8 +86,6 @@ public:
         else{
             finish=true;
         }
-        distance_now=-1;
-        index=-1;
     }
     void output(){
         cout<<"("<<x<<","<<y<<")"<<endl;
@@ -103,7 +100,6 @@ public:
 
 int** A;
 location** C;
-location** F;
 
 void check_matrix(){
     for (int m=row+1; m>=0; m--) {
@@ -128,14 +124,101 @@ void check_location(){
     cout<<endl;
 }
 
-// all pairs shortest path, collect in B[num+1][num+1] is an adjencency matrix
+
+//queue
+class queue{
+public:
+    location* F=new location[num+3];
+    int now=0;
+    int amount=0;
+    
+    void push(location i){
+        F[now+amount]=i;
+        amount++;
+    };
+    location pop(){
+        now++;
+        amount--;
+        return F[now-1];
+    }
+    queue(){
+        now=0;
+        amount=0;
+    }
+    
+};
+
+
+
+// all pairs shortest path, collect in B[num+1][num+1]
 
 int** B;
+location** D;
+void BFS(location**,int start){
+    queue q;
+    D[all[start].x][all[start].y].distance_charge=0;
+    q.push(D[all[start].x][all[start].y]);
+    while (q.amount>0){
+        location v=q.pop();
+        if ((D[(v.x)+1][v.y].type!=1)&&(D[(v.x)+1][v.y].distance_charge==-1)) {
+            D[v.x+1][v.y].distance_charge = D[v.x][v.y].distance_charge + 1;
+            q.push(C[v.x+1][v.y]);
+            //cout<<"("<<v.x+1<<","<<v.y<<")";
+        }
+        if ((D[(v.x)-1][v.y].type!=1)&&(D[(v.x)-1][v.y].distance_charge==-1)) {
+            D[v.x-1][v.y].distance_charge = D[v.x][v.y].distance_charge + 1;
+            q.push(C[v.x-1][v.y]);
+            //cout<<"("<<v.x-1<<","<<v.y<<")";
+        }
+        if ((D[v.x][(v.y)+1].type!=1)&&(D[v.x][(v.y)+1].distance_charge==-1)) {
+            D[v.x][v.y+1].distance_charge = D[v.x][v.y].distance_charge + 1;
+            q.push(C[v.x][v.y+1]);
+            //cout<<"("<<v.x<<","<<v.y+1<<")";
+        }
+        if ((D[v.x][(v.y)-1].type!=1)&&(D[v.x][(v.y)-1].distance_charge==-1)) {
+            D[v.x][v.y-1].distance_charge = D[v.x][v.y].distance_charge + 1;
+            q.push(C[v.x][v.y-1]);
+            //cout<<"("<<v.x<<","<<v.y-1<<")";
+        }
+    }
+}
+
+void calculate_B(int start){
+    D=new location*[column+2];
+    for (int i=0; i<column+2; i++) {
+        D[i]=new location[row+2];
+    }
+    for (int x=0; x<=column+1; x++) {
+        for (int y=0; y<=row+1; y++) {
+            D[x][y]=C[x][y];
+        }
+    }
+    BFS(D,start);
+    for (int i=0; i<=num; i++) {
+        if ((B[i][start]!=-1)&&B[i][start]!=(D[all[i].x][all[i].y]).distance_charge) {
+            cout<<"calculate_B error"<<endl;
+        }
+        B[i][start]=(D[all[i].x][all[i].y]).distance_charge;
+        B[start][i]=(D[all[i].x][all[i].y]).distance_charge;
+    }
+}
+
+
+
 void calculate_distance(){
     B=new int*[num+1];
     for (int i=0; i<num+1; i++) {
         B[i]=new int[num+1];
     }
+    for (int x=0; x<=num; x++) {
+        for (int y=0; y<=num; y++) {
+            B[x][y]=-1;
+        }
+    }
+    for (int i=0; i<=num; i++) {
+        calculate_B(i);
+    }
+    /*
     for (int i=0; i<=num; i++) {
         for (int j=0; j<=num; j++) {
             if (i==j) {
@@ -159,6 +242,7 @@ void calculate_distance(){
             }
         }
     }
+     */
 // print B
 /*
     for (int i=0; i<=num; i++) {
@@ -170,144 +254,65 @@ void calculate_distance(){
 */
 }
 
-
+/*
 
 //queue
-
 class queue{
 public:
-    location* E=new location[num+3];
+    location* D=new location[num+3];
     int now=0;
     int amount=0;
     
     void push(location i){
-        E[now+amount]=i;
+        D[now+amount]=i;
         amount++;
     };
     location pop(){
         now++;
         amount--;
-        return E[now-1];
+        return D[now-1];
     }
     void show_queue(){
-        E[now].show();
+        D[now].show();
         return;
     }
-    queue(){}
 };
 
-int* D=new int[num+1];
+
 
 //single source shortest path by DFS
-queue q[1];
-/*
-void DFS(int m,int n){
-    
-    //queue* q=new queue;
-    q[0].now=0;
-    q[0].amount=0;
-    q[0].push(C[m][n]);
+void DFS(int x,int y){
+    queue q;
+    q.push(C[x][y]);
     int distance=0;
-    C[m][n].distance_charge=distance;
+    C[x][y].distance_charge=distance;
     int count;
-    
-    check_matrix();
-    while (q[0].amount>0) {
-        count=q[0].amount;
+    while (q.amount>0) {
+        count=q.amount;
         distance++;
-        cout<<endl<<"distance "<<distance<<":";
         for (int j=1; j<=count; j++) {
-            location v=q[0].pop();
-            if ((C[(v.x)+1][v.y].type!=1)&&(C[(v.x)+1][v.y].distance_charge==-1)) {
+            location v=q.pop();
+            if ((C[v.x+1][v.y].type!=1)&&(C[v.x+1][v.y].distance_charge==-1)) {
+                q.push(C[v.x+1][v.y]);
                 C[v.x+1][v.y].distance_charge=distance;
-                q[0].push(C[v.x+1][v.y]);
-                cout<<"("<<v.x+1<<","<<v.y<<")";
             }
-            if ((C[(v.x)-1][v.y].type!=1)&&(C[(v.x)-1][v.y].distance_charge==-1)) {
+            if ((C[v.x-1][v.y].type!=1)&&(C[v.x-1][v.y].distance_charge==-1)) {
+                q.push(C[v.x-1][v.y]);
                 C[v.x-1][v.y].distance_charge=distance;
-                q[0].push(C[v.x-1][v.y]);
-                cout<<"("<<v.x-1<<","<<v.y<<")";
             }
-            if ((C[v.x][(v.y)+1].type!=1)&&(C[v.x][(v.y)+1].distance_charge==-1)) {
+            if ((C[v.x][v.y+1].type!=1)&&(C[v.x][v.y+1].distance_charge==-1)) {
+                q.push(C[v.x][v.y+1]);
                 C[v.x][v.y+1].distance_charge=distance;
-                q[0].push(C[v.x][v.y+1]);
-                cout<<"("<<v.x<<","<<v.y+1<<")";
             }
-            if ((C[v.x][(v.y)-1].type!=1)&&(C[v.x][(v.y)-1].distance_charge==-1)) {
+            if ((C[v.x][v.y-1].type!=1)&&(C[v.x][v.y-1].distance_charge==-1)) {
+                q.push(C[v.x][v.y-1]);
                 C[v.x][v.y-1].distance_charge=distance;
-                q[0].push(C[v.x][v.y-1]);
-                cout<<"("<<v.x<<","<<v.y-1<<")";
             }
             //v旁邊還沒被加入的點push進去,amount++,distance=i
         }
-        //cout<<endl<<"now="<<q[0].now<<", amount"<<q[0].amount<<endl;
-    }
-    //delete q;
-    
-}
- */
-void BFS(int m,int n){
-    q[0].now=0;
-    q[0].amount=0;
-    q[0].push(C[m][n]);
-    int distance=0;
-    C[m][n].distance_charge=distance;
-    while (q[0].amount>0){
-        location v=q[0].pop();
-        if ((C[(v.x)+1][v.y].type!=1)&&(C[(v.x)+1][v.y].distance_charge==-1)) {
-            C[v.x+1][v.y].distance_charge = C[v.x][v.y].distance_charge + 1;
-            q[0].push(C[v.x+1][v.y]);
-            //cout<<"("<<v.x+1<<","<<v.y<<")";
-        }
-        if ((C[(v.x)-1][v.y].type!=1)&&(C[(v.x)-1][v.y].distance_charge==-1)) {
-            C[v.x-1][v.y].distance_charge = C[v.x][v.y].distance_charge + 1;
-            q[0].push(C[v.x-1][v.y]);
-            //cout<<"("<<v.x-1<<","<<v.y<<")";
-        }
-        if ((C[v.x][(v.y)+1].type!=1)&&(C[v.x][(v.y)+1].distance_charge==-1)) {
-            C[v.x][v.y+1].distance_charge = C[v.x][v.y].distance_charge + 1;
-            q[0].push(C[v.x][v.y+1]);
-            //cout<<"("<<v.x<<","<<v.y+1<<")";
-        }
-        if ((C[v.x][(v.y)-1].type!=1)&&(C[v.x][(v.y)-1].distance_charge==-1)) {
-            C[v.x][v.y-1].distance_charge = C[v.x][v.y].distance_charge + 1;
-            q[0].push(C[v.x][v.y-1]);
-            //cout<<"("<<v.x<<","<<v.y-1<<")";
-        }
     }
 }
-
-void DFS_1(int i){
-    // do DFS on C, 直接改C
-    
-    for (int y=row+1; y>=0; y--) {
-        for (int x=0; x<column+2; x++) {
-            /*
-            C[x][y].x=x;
-            C[x][y].y=y;
-            //cout<<endl<<x<<y<<A[x][y]<<endl;
-            C[x][y].type=A[x][y];
-            C[x][y].distance_charge=-1;
-            if (C[x][y].type==0) {
-                C[x][y].finish=false;
-            }
-            else{
-                C[x][y].finish=true;
-            }
-             */
-            C[x][y]=F[x][y];
-        }
-    }
-    //check_matrix();
-    BFS(all[i].x,all[i].y);
-    
-    for (int m=0; m<=num; m++) {
-        D[m]=C[all[m].x][all[m].y].distance_charge;
-        //cout<<D[m]<<endl;
-    }
-    
-}
-
+*/
 
 location tmp;
 
@@ -332,14 +337,11 @@ bool is_any_undone(){
 int goal_index;
 bool next_is_charge;
 bool during_near;
-ans* tmp1;
 
 void walk(int start,int end){
-    //cout<<"start walk:"<<all[start].x<<" "<<all[start].y<<";"<<all[end].x<<" "<<all[end].y<<endl;
-    next_is_charge=0;
-    DFS_1(end);
+    next_is_charge=0;                               // debug cout<<"start walk"<<endl;
     for (int i=0; i<=num; i++) {
-        all[i].distance_now = D[i];
+        all[i].distance_now = B[end][i];
     }
     
     //find next,undone is better
@@ -348,10 +350,9 @@ void walk(int start,int end){
     for (int count= all[start].distance_now-1 ; count>=0; count--) {
         check=0;
         // put location into ans[], and count ans_num
-        tmp1=new ans(tmp.x,tmp.y);
-        ans_tmp->nextans=tmp1;
+        ans_tmp->nextans=new ans(tmp.x,tmp.y);
         ans_tmp=ans_tmp->nextans;
-        ans_num++;
+        ans_num++;                              //check tmp status // debug all[tmp.index].show(); cout<<" , direction : ("<<all[end].x<<","<<all[end].y<<")"<<endl;
         //find next
         for (int i=0; i<=num; i++) {
             if (all[i].distance_now==count) {
@@ -369,7 +370,6 @@ void walk(int start,int end){
         }
         energy--;
         tmp=all[next];
-        //cout<<tmp.x<<" "<<tmp.y<<endl;
         if (all[tmp.index].finish==0) {
             all[tmp.index].finish=1;
             undone--;
@@ -381,43 +381,39 @@ void walk(int start,int end){
             }
         }
         
-    }
+    }                                       // debug cout<<"end walk"<<endl;
 }
 
-void comeback(){
-    //cout<<"start comeback"<<endl;
-    walk(tmp.index, 0);
+void comeback(){                            // debug cout<<"start come back"<<endl;
+    walk(tmp.index, 0);                     // debug cout<<"end come back"<<endl;
 }
 
-void go_near(){
-    //cout<<"start go near"<<endl;
+void go_near(){                                 // debug cout<<"start go near"<<endl;
     while (is_any_undone()==1) {
-        DFS_1(tmp.index);
         for (int i=0; i<=num; i++) {
-            all[i].distance_now = all[i].distance_charge - D[i];
+            all[i].distance_now = all[i].distance_charge - B[tmp.index][i];
         }
         goal_index=0;
         for (int i=0; i<=num; i++) {
-            if(all[i].finish==0){
+            if(all[i].finish==0){                                        // debug cout<<"all[goal].distance_now =  "<<all[goal_index].distance_now<<endl;
                 if (all[i].distance_now>all[goal_index].distance_now) {
-                    if(energy>=D[i]+all[i].distance_charge){
-                        goal_index=i;
+                    if(energy>=B[tmp.index][i]+all[i].distance_charge){
+                        goal_index=i;                                       // debug cout<<"change goal into "<<i<<endl;
                     }
                 }
             }
-        }
+        }                                                               // debug cout<<"tmp= "<<tmp.index<<" , goal= "<<goal_index<<endl;
         if ((tmp.index==goal_index)||(goal_index==0)) {
             break;
-        }
+        }                                                           // debug cout<<"call walk"<<endl;
         walk(tmp.index,goal_index);
         if (next_is_charge==1) {
             break;
         }
-    }
+    }                                                               // debug cout<<"end go near"<<endl;
 }
 
-void go_farest(){
-    //cout<<"start go farest"<<endl;
+void go_farest(){                                                   // debug cout<<"start go farest"<<endl;
     goal_index=0;
     for (int i=0; i<=num; i++) {
         if (all[i].distance_charge>all[goal_index].distance_charge) {
@@ -426,72 +422,14 @@ void go_farest(){
             }
         }
     }
-    walk(0,goal_index);
+    walk(0,goal_index);                                                 // debug cout<<"end go farest"<<endl;
 }
-
-/*
-void big_walk(int start,int end){
-
-    for (int i=0; i<=num; i++) {
-        all[i].distance_now = B[end][i];
-    }
-    
-    //find next,undone is better
-    int next=tmp.index;
-    bool check;
-    for (int count= all[start].distance_now-1 ; count>=0; count--) {
-        check=0;
-        // put location into ans[], and count ans_num
-        ans_tmp->next=new ans(tmp.x,tmp.y);
-        ans_tmp=ans_tmp->next;
-        ans_num++;
-        //find next
-        for (int i=0; i<=num; i++) {
-            if (all[i].distance_now==count) {
-                if ( (abs(all[i].x-tmp.x) + abs(all[i].y-tmp.y)) ==1 ) {
-                    if (all[i].finish==0) {
-                        check=1;
-                        next=i;
-                    }
-                    else{
-                        next=i;
-                    }
-                }
-            }
-            if (check==1)  break;
-        }
-        tmp=all[next];
-        if (all[tmp.index].finish==0) {
-            all[tmp.index].finish=1;
-            undone--;
-        }
-    }                                       // debug cout<<"end walk"<<endl;
-}
-
-
-
-void big_comeback(){
-    big_walk(tmp.index, 0);
-}
-
-void big_go_farest(){
-    goal_index=0;
-    for (int i=0; i<=num; i++) {
-        if (all[i].distance_charge>all[goal_index].distance_charge) {
-            if (all[i].finish==0) {
-                goal_index=i;
-            }
-        }
-    }
-    big_walk(0,goal_index);                                                 // debug cout<<"end go farest"<<endl;
-}
-*/
 
 /////////////////// main
 
 int main() {
     
-    freopen("testcase2.data", "r", stdin);
+    freopen("floor.data", "r", stdin);
     freopen("final.path", "w", stdout);
     cin>>row>>column>>energy_max;
     char input;
@@ -533,29 +471,26 @@ int main() {
             }
         }
     }
-    undone=num;
-    //check_matrix();
-    //check_location();
-    C =new location*[column+3];
-    for (int i=0; i<column+3; i++) {
-        C[i]=new location[row+3];
-    }
-    F =new location*[column+3];
-    for (int i=0; i<column+3; i++) {
-        F[i]=new location[row+3];
+    undone=num;                         //check_matrix();   //check_location();
+    
+    C =new location*[column+2];
+    for (int i=0; i<column+2; i++) {
+        C[i]=new location[row+2];
     }
     for (int y=row+1; y>=0; y--) {
         for (int x=0; x<column+2; x++) {
-            F[x][y]=location(x,y,A[x][y]);
+            C[x][y]=location(x,y,A[x][y]);
         }
     }
+    //check_matrix();
+    //cout<<num<<endl;
     
-    if (num<=14500) {
+    if (num<=20500) {
         // B[][] store all pairs distance
-        //calculate_distance();
-        DFS_1(0);
+        calculate_distance();
+        
         for (int i=0; i<=num; i++) {
-            all[i].distance_charge=D[i];
+            all[i].distance_charge=B[0][i];
         }
         
         // Start travesal
@@ -578,16 +513,10 @@ int main() {
         }
         else{
             output_ans();
-            cout<<"done"<<endl;
         }
     }
-    else{
-        cout<<"num>1500"<<endl;
-        
-    }
-    /*
     else{                                    //if num>1450, calculate distance by DFS
-        
+        /*
     // do DFS on C, 直接改C
         C =new location*[column+2];
         for (int i=0; i<column+2; i++) {
@@ -602,37 +531,28 @@ int main() {
         
         DFS(all[0].x,all[0].y);
         
+        check_matrix();
         
         all=new location[num+1];
         int e=0;
         
         for (int x=1; x<=column; x++) {
             for (int y=1; y<=row; y++) {
-                if (C[x][y].type==0) {
+                if (C[x][y].index==0) {
                     e++;
                     all[e]=C[x][y];
                     all[e].index=e;
                 }
-                else if (C[x][y].type==2){
+                else if (C[x][y].index==2){
                     all[0]=C[x][y];
                     all[0].finish=true;
                     all[0].index=0;
                 }
             }
         }
-        
+        */
     // let's go
-        tmp=all[0];
-        
-        while(undone>0){
-            big_go_farest();
-            big_comeback();
-        }
-        // End
-        
-        output_ans();
         
     }
-     */
     return 0;
 }
