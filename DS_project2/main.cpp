@@ -197,13 +197,17 @@ void calculate_B(int start){
         }
     }
     BFS(D,start);
+    /*
     for (int i=0; i<=num; i++) {
+        
         if ((B[i][start]!=-1)&&B[i][start]!=(D[all[i].x][all[i].y]).distance_charge) {
             cout<<"calculate_B error"<<endl;
         }
+         
         B[i][start]=(D[all[i].x][all[i].y]).distance_charge;
         B[start][i]=(D[all[i].x][all[i].y]).distance_charge;
     }
+     */
     for (int i=0; i<=num; i++) {
         G[i]=(D[all[i].x][all[i].y]).distance_charge;
     }
@@ -266,7 +270,7 @@ void walk(int start,int end){
     if (end!=0) {
         calculate_B(end);
         for (int i=0; i<=num; i++) {
-            all[i].distance_now = B[end][i];
+            all[i].distance_now = G[i];
         }
     }
     else{
@@ -381,13 +385,13 @@ void go_near(){
         //calculate_B(tmp.index);
         
         for (int i=0; i<=num; i++) {
-            all[i].distance_now = all[i].distance_charge - B[tmp.index][i];
+            all[i].distance_now = all[i].distance_charge - G[tmp.index];
         }
         goal_index=0;
         for (int i=0; i<=num; i++) {
             if(all[i].finish==0){
                 if (all[i].distance_now>all[goal_index].distance_now) {
-                    if(energy>=B[tmp.index][i]+all[i].distance_charge){
+                    if(energy>=G[i]+all[i].distance_charge){
                         goal_index=i;
                     }
                 }
@@ -488,6 +492,7 @@ int main() {
     }
     
     // B[][] store all pairs distance
+    /*
     B=new int*[num+1];
     for (int i=0; i<num+1; i++) {
         B[i]=new int[num+1];
@@ -498,13 +503,14 @@ int main() {
             B[x][y]=-1;
         }
     }
+     */
     G=new int[num+1];
     //calculate_all_distance();
     
     calculate_B(0);
     
     for (int i=0; i<=num; i++) {
-        all[i].distance_charge=B[0][i];
+        all[i].distance_charge=G[i];
     }
     
     // Start travesal
