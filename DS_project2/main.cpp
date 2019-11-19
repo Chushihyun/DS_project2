@@ -197,17 +197,7 @@ void calculate_B(int start){
         }
     }
     BFS(D,start);
-    /*
-    for (int i=0; i<=num; i++) {
-        
-        if ((B[i][start]!=-1)&&B[i][start]!=(D[all[i].x][all[i].y]).distance_charge) {
-            cout<<"calculate_B error"<<endl;
-        }
-         
-        B[i][start]=(D[all[i].x][all[i].y]).distance_charge;
-        B[start][i]=(D[all[i].x][all[i].y]).distance_charge;
-    }
-     */
+    
     for (int i=0; i<=num; i++) {
         G[i]=(D[all[i].x][all[i].y]).distance_charge;
     }
@@ -385,7 +375,7 @@ void go_near(){
         //calculate_B(tmp.index);
         
         for (int i=0; i<=num; i++) {
-            all[i].distance_now = all[i].distance_charge - G[tmp.index];
+            all[i].distance_now = all[i].distance_charge - G[i];
         }
         goal_index=0;
         for (int i=0; i<=num; i++) {
