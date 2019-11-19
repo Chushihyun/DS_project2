@@ -16,7 +16,6 @@
 
 
 #include <iostream>
-#include <cstdlib>
 using namespace std;
 
 int row, column, energy_max;
@@ -99,11 +98,13 @@ public:
 
 int** A;
 location** C;
+int** index_chart;
+location* all;
 
 void check_matrix(){
-    for (int m=row+1; m>=0; m--) {
-        for (int n=0; n<column+2; n++) {
-            cout<<C[n][m].type<<" ";
+    for (int m=row; m>=1; m--) {
+        for (int n=1; n<column+1; n++) {
+            cout<<all[index_chart[n][m]].distance_now<<" ";
         }
         cout<<endl;
     }
@@ -112,7 +113,7 @@ void check_matrix(){
 
 // 輸出所有目標位置ㄝ，A[0]為充電站，A[1]~A[num]為路
 
-location* all;
+
 int num=0;
 
 void check_location(){
@@ -143,6 +144,9 @@ public:
     queue(){
         now=0;
         amount=0;
+    }
+    ~queue(){
+        delete[] F;
     }
     
 };
@@ -177,8 +181,11 @@ void BFS(location** D,int start){
         }
     }
 }
+int bfs_num=0;
+int* G;
 
 void calculate_B(int start){
+    bfs_num++;
     location** D;
     D=new location*[column+2];
     for (int i=0; i<column+2; i++) {
@@ -197,21 +204,18 @@ void calculate_B(int start){
         B[i][start]=(D[all[i].x][all[i].y]).distance_charge;
         B[start][i]=(D[all[i].x][all[i].y]).distance_charge;
     }
+    for (int i=0; i<=num; i++) {
+        G[i]=(D[all[i].x][all[i].y]).distance_charge;
+    }
+    for (int i=0; i<column+2; i++) {
+        delete D[i];
+    }
     delete D;
 }
 
 
 
-void calculate_distance(){
-    B=new int*[num+1];
-    for (int i=0; i<num+1; i++) {
-        B[i]=new int[num+1];
-    }
-    for (int x=0; x<=num; x++) {
-        for (int y=0; y<=num; y++) {
-            B[x][y]=-1;
-        }
-    }
+void calculate_all_distance(){
     for (int i=0; i<=num; i++) {
         calculate_B(i);
     }
@@ -228,6 +232,7 @@ void calculate_distance(){
     }
      */
 }
+
 
 location tmp;
 
@@ -253,15 +258,30 @@ int goal_index;
 bool next_is_charge;
 bool during_near;
 
+
 void walk(int start,int end){
+    
+    
     next_is_charge=0;
-    for (int i=0; i<=num; i++) {
-        all[i].distance_now = B[end][i];
+    if (end!=0) {
+        calculate_B(end);
+        for (int i=0; i<=num; i++) {
+            all[i].distance_now = B[end][i];
+        }
     }
+    else{
+        for (int i=0; i<=num; i++) {
+            all[i].distance_now = all[i].distance_charge;
+        }
+    }
+    
     
     //find next,undone is better
     int next=tmp.index;
     bool check;
+    int z;
+    //check_matrix();
+    
     for (int count= all[start].distance_now-1 ; count>=0; count--) {
         check=0;
         // put location into ans[], and count ans_num
@@ -269,6 +289,8 @@ void walk(int start,int end){
         ans_tmp=ans_tmp->nextans;
         ans_num++;
         //find next
+        
+        /*
         for (int i=0; i<=num; i++) {
             if (all[i].distance_now==count) {
                 if ( (abs(all[i].x-tmp.x) + abs(all[i].y-tmp.y)) ==1 ) {
@@ -283,6 +305,56 @@ void walk(int start,int end){
             }
             if (check==1)  break;
         }
+         */
+        
+        if (check==0) {
+            if (A[tmp.x+1][tmp.y]!=1) {
+                z=index_chart[tmp.x+1][tmp.y];
+                if(all[z].distance_now==count){
+                    next=z;
+                    if (all[z].finish==0){
+                        check=1;
+                    }
+                }
+            }
+        }
+        
+        if (check==0) {
+            if (A[tmp.x-1][tmp.y]!=1) {
+                z=index_chart[tmp.x-1][tmp.y];
+                if(all[z].distance_now==count){
+                    next=z;
+                    if (all[z].finish==0){
+                        check=1;
+                    }
+                }
+            }
+        }
+        
+        if (check==0) {
+            if (A[tmp.x][tmp.y+1]!=1) {
+                z=index_chart[tmp.x][tmp.y+1];
+                if(all[z].distance_now==count){
+                    next=z;
+                    if (all[z].finish==0){
+                        check=1;
+                    }
+                }
+            }
+        }
+        
+        if (check==0) {
+            if (A[tmp.x][tmp.y-1]!=1) {
+                z=index_chart[tmp.x][tmp.y-1];
+                if(all[z].distance_now==count){
+                    next=z;
+                    if (all[z].finish==0){
+                        check=1;
+                    }
+                }
+            }
+        }
+        
         energy--;
         tmp=all[next];
         if (all[tmp.index].finish==0) {
@@ -305,6 +377,9 @@ void comeback(){
 
 void go_near(){
     while (is_any_undone()==1) {
+        
+        //calculate_B(tmp.index);
+        
         for (int i=0; i<=num; i++) {
             all[i].distance_now = all[i].distance_charge - B[tmp.index][i];
         }
@@ -344,6 +419,7 @@ void go_farest(){
 
 int main() {
     
+    
     freopen("floor1.data", "r", stdin);
     freopen("final.path", "w", stdout);
     cin>>row>>column>>energy_max;
@@ -367,7 +443,17 @@ int main() {
             }
         }
     }
+    
     // input finished  0:可走 1:不可走 2:充電站
+    index_chart=new int*[column+1];
+    for (int i=0; i<column+1; i++) {
+        index_chart[i]=new int[row+1];
+    }
+    for (int x=1; x<=column; x++) {
+        for (int y=1; y<=row; y++) {
+            index_chart[x][y]=-1;
+        }
+    }
     
     // collect all locations in  all[]
     all=new location[row*column+1];
@@ -378,15 +464,18 @@ int main() {
                 num++;
                 all[num]=location(x, y);
                 all[num].index=num;
+                index_chart[x][y]=num;
             }
             else if (A[x][y]==2){
                 all[0]=location(x, y);
                 all[0].finish=true;
                 all[0].index=0;
+                index_chart[x][y]=0;
             }
         }
     }
     undone=num;
+    //check_matrix();
     
     C =new location*[column+2];
     for (int i=0; i<column+2; i++) {
@@ -399,7 +488,20 @@ int main() {
     }
     
     // B[][] store all pairs distance
-    calculate_distance();
+    B=new int*[num+1];
+    for (int i=0; i<num+1; i++) {
+        B[i]=new int[num+1];
+    }
+    
+    for (int x=0; x<=num; x++) {
+        for (int y=0; y<=num; y++) {
+            B[x][y]=-1;
+        }
+    }
+    G=new int[num+1];
+    //calculate_all_distance();
+    
+    calculate_B(0);
     
     for (int i=0; i<=num; i++) {
         all[i].distance_charge=B[0][i];
@@ -427,6 +529,7 @@ int main() {
     else{
         output_ans();
     }
-    
     return 0;
 }
+
+
