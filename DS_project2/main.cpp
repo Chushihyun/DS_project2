@@ -12,7 +12,6 @@
 // num:要走的location數量
 // undone:尚未走過的點
 // energy:當下剩餘電力
-// B:store all pairs distance
 
 
 #include <iostream>
@@ -113,7 +112,6 @@ void check_matrix(){
 
 // 輸出所有目標位置ㄝ，A[0]為充電站，A[1]~A[num]為路
 
-
 int num=0;
 
 void check_location(){
@@ -123,7 +121,6 @@ void check_location(){
     }
     cout<<endl;
 }
-
 
 //queue
 class queue{
@@ -148,10 +145,7 @@ public:
     ~queue(){
         delete[] F;
     }
-    
 };
-
-
 
 // all pairs shortest path, collect in B[num+1][num+1]
 
@@ -207,14 +201,12 @@ void calculate_B(int start){
     delete D;
 }
 
-
-
 void calculate_all_distance(){
     for (int i=0; i<=num; i++) {
         calculate_B(i);
     }
     /*
-//Floyd-Warshall algorithm
+    //Floyd-Warshall algorithm
     for (int k=0; k<=num; k++) {
         for (int i=0; i<=num; i++) {
             for (int j=0; j<=num; j++) {
@@ -226,7 +218,6 @@ void calculate_all_distance(){
     }
      */
 }
-
 
 location tmp;
 
@@ -252,9 +243,7 @@ int goal_index;
 bool next_is_charge;
 bool during_near;
 
-
 void walk(int start,int end){
-    
     
     next_is_charge=0;
     if (end!=0) {
@@ -269,12 +258,10 @@ void walk(int start,int end){
         }
     }
     
-    
     //find next,undone is better
     int next=tmp.index;
     bool check;
     int z;
-    //check_matrix();
     
     for (int count= all[start].distance_now-1 ; count>=0; count--) {
         check=0;
@@ -301,6 +288,28 @@ void walk(int start,int end){
         }
          */
         
+         if (check==0) {
+             if (A[tmp.x-1][tmp.y]!=1) {
+                 z=index_chart[tmp.x-1][tmp.y];
+                 if(all[z].distance_now==count){
+                     next=z;
+                     if (all[z].finish==0){
+                         check=1;
+                     }
+                 }
+             }
+         }
+         if (check==0) {
+             if (A[tmp.x][tmp.y-1]!=1) {
+                 z=index_chart[tmp.x][tmp.y-1];
+                 if(all[z].distance_now==count){
+                     next=z;
+                     if (all[z].finish==0){
+                         check=1;
+                     }
+                 }
+             }
+         }
         if (check==0) {
             if (A[tmp.x+1][tmp.y]!=1) {
                 z=index_chart[tmp.x+1][tmp.y];
@@ -312,42 +321,17 @@ void walk(int start,int end){
                 }
             }
         }
-        
-        if (check==0) {
-            if (A[tmp.x-1][tmp.y]!=1) {
-                z=index_chart[tmp.x-1][tmp.y];
-                if(all[z].distance_now==count){
-                    next=z;
-                    if (all[z].finish==0){
-                        check=1;
-                    }
-                }
-            }
-        }
-        
-        if (check==0) {
-            if (A[tmp.x][tmp.y+1]!=1) {
-                z=index_chart[tmp.x][tmp.y+1];
-                if(all[z].distance_now==count){
-                    next=z;
-                    if (all[z].finish==0){
-                        check=1;
-                    }
-                }
-            }
-        }
-        
-        if (check==0) {
-            if (A[tmp.x][tmp.y-1]!=1) {
-                z=index_chart[tmp.x][tmp.y-1];
-                if(all[z].distance_now==count){
-                    next=z;
-                    if (all[z].finish==0){
-                        check=1;
-                    }
-                }
-            }
-        }
+       if (check==0) {
+           if (A[tmp.x][tmp.y+1]!=1) {
+               z=index_chart[tmp.x][tmp.y+1];
+               if(all[z].distance_now==count){
+                   next=z;
+                   if (all[z].finish==0){
+                       check=1;
+                   }
+               }
+           }
+       }
         
         energy--;
         tmp=all[next];
@@ -370,9 +354,8 @@ void comeback(){
 }
 
 void go_near(){
+    during_near=1;
     while (is_any_undone()==1) {
-        
-        //calculate_B(tmp.index);
         
         for (int i=0; i<=num; i++) {
             all[i].distance_now = all[i].distance_charge - G[i];
@@ -392,9 +375,11 @@ void go_near(){
         }
         walk(tmp.index,goal_index);
         if (next_is_charge==1) {
+            during_near=0;
             break;
         }
     }
+    during_near=0;
 }
 
 void go_farest(){
@@ -409,16 +394,121 @@ void go_farest(){
     walk(0,goal_index);
 }
 
-/////////////////// main
+int go_around(){
+    
+    int output=-1;
+    int z;
+    int priority=0;
+    
+    //check 上下左右還沒走過的 distance大的優先
+    if (A[tmp.x-1][tmp.y]!=1) {
+        z=index_chart[tmp.x-1][tmp.y];
+        if(all[z].finish==false){
+            if (energy>=1+all[z].distance_charge) {
+                if (all[z].distance_charge>=priority) {
+                    output=z;
+                    priority=all[z].distance_charge;
+                }
+            }
+        }
+    }
+    if (A[tmp.x][tmp.y-1]!=1) {
+       z=index_chart[tmp.x][tmp.y-1];
+       if(all[z].finish==false){
+           if (energy>=1+all[z].distance_charge) {
+               if (all[z].distance_charge>=priority) {
+                   output=z;
+                   priority=all[z].distance_charge;
+               }
+           }
+       }
+    }
+    if (A[tmp.x+1][tmp.y]!=1) {
+        z=index_chart[tmp.x+1][tmp.y];
+        if(all[z].finish==false){
+            if (energy>=1+all[z].distance_charge) {
+                if (all[z].distance_charge>=priority) {
+                    output=z;
+                    priority=all[z].distance_charge;
+                }
+            }
+        }
+    }
+    if (A[tmp.x][tmp.y+1]!=1) {
+        z=index_chart[tmp.x][tmp.y+1];
+        if(all[z].finish==false){
+            if (energy>=1+all[z].distance_charge) {
+                if (all[z].distance_charge>=priority) {
+                    output=z;
+                    priority=all[z].distance_charge;
+                }
+            }
+        }
+    }
+    // 輸出下一個要走的點
+    return output;
+}
 
-int main() {
+void walk_one_step(int goal){
+    // walk tmp to direction d
+    int next=goal;
     
+    // put location into ans[], and count ans_num
+    ans_tmp->nextans=new ans(tmp.x,tmp.y);
+    ans_tmp=ans_tmp->nextans;
+    ans_num++;
     
-    freopen("floor1.data", "r", stdin);
-    freopen("final.path", "w", stdout);
-    cin>>row>>column>>energy_max;
+    energy--;
+    tmp=all[next];
+    if (all[tmp.index].finish==0) {
+        all[tmp.index].finish=1;
+        undone--;
+    }
+    if (during_near==1) {
+        if (next==0) {
+            next_is_charge=1;
+        }
+    }
+}
+
+void big_go_near(){
+    during_near=1;
+    while (is_any_undone()==1) {
+        int d=go_around();
+        if (d!=-1) {
+            walk_one_step(d);
+        }
+        else{
+            calculate_B(tmp.index);
+            for (int i=0; i<=num; i++) {
+                all[i].distance_now = all[i].distance_charge - G[i];
+            }
+            goal_index=0;
+            for (int i=0; i<=num; i++) {
+                if(all[i].finish==0){
+                    if (all[i].distance_now>all[goal_index].distance_now) {
+                        if(energy>=G[i]+all[i].distance_charge){
+                            goal_index=i;
+                        }
+                    }
+                }
+            }
+            if ((tmp.index==goal_index)||(goal_index==0)) {
+                break;
+            }
+            walk(tmp.index,goal_index);
+        }
+        if (next_is_charge==1) {
+            during_near=0;
+            return;
+        }
+    }
+    during_near=0;
+}
+
+void initial(){
+    
     char input;
-    
     // initialize A=整張圖, A[x][y] = 一般座標位置
     A=new int*[column+2];
     for (int i=0; i<column+2; i++) {
@@ -468,8 +558,8 @@ int main() {
             }
         }
     }
+    
     undone=num;
-    //check_matrix();
     
     C =new location*[column+2];
     for (int i=0; i<column+2; i++) {
@@ -480,52 +570,57 @@ int main() {
             C[x][y]=location(x,y,A[x][y]);
         }
     }
-    
-    // B[][] store all pairs distance
-    /*
-    B=new int*[num+1];
-    for (int i=0; i<num+1; i++) {
-        B[i]=new int[num+1];
-    }
-    
-    for (int x=0; x<=num; x++) {
-        for (int y=0; y<=num; y++) {
-            B[x][y]=-1;
-        }
-    }
-     */
+
     G=new int[num+1];
-    //calculate_all_distance();
     
     calculate_B(0);
     
     for (int i=0; i<=num; i++) {
         all[i].distance_charge=G[i];
     }
+}
+
+/////////////////// main
+
+int main() {
     
+    
+    freopen("floor.data", "r", stdin);
+    freopen("final.path", "w", stdout);
+    cin>>row>>column>>energy_max;
+    
+    initial();
+        
     // Start travesal
     tmp=all[0];
     energy=energy_max;
     
-    while(undone>0){
-        go_farest();
-        during_near=1;
-        go_near();
-        during_near=0;
-        comeback();
-        energy=energy_max;
-    }
-    // End
-    
-    //不用動的case
-    if (num==0){
-        cout<<"0"<<endl;
-        ans(all[0].x,all[0].y).output();
+    if (num<=100000) {
+        //不用動的case
+        if (num==0){
+            cout<<"0"<<endl;
+            ans(all[0].x,all[0].y).output();
+            return 0;
+        }
+        
+        while(undone>0){
+            go_farest();
+            go_near();
+            comeback();
+            energy=energy_max;
+        }
+        // End
     }
     else{
-        output_ans();
+        while(undone>0){
+            go_farest();
+            big_go_near();
+            comeback();
+            energy=energy_max;
+        }
     }
+    
+    output_ans();
+    
     return 0;
 }
-
-
