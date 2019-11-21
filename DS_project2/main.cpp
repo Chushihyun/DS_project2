@@ -243,6 +243,8 @@ int goal_index;
 bool next_is_charge;
 bool during_near;
 
+/////////////////////////// for normal case
+
 void walk(int start,int end){
     
     next_is_charge=0;
@@ -270,7 +272,7 @@ void walk(int start,int end){
         ans_tmp=ans_tmp->nextans;
         ans_num++;
         //find next
-        
+
         /*
         for (int i=0; i<=num; i++) {
             if (all[i].distance_now==count) {
@@ -287,7 +289,6 @@ void walk(int start,int end){
             if (check==1)  break;
         }
          */
-        
          if (check==0) {
              if (A[tmp.x-1][tmp.y]!=1) {
                  z=index_chart[tmp.x-1][tmp.y];
@@ -332,7 +333,6 @@ void walk(int start,int end){
                }
            }
        }
-        
         energy--;
         tmp=all[next];
         if (all[tmp.index].finish==0) {
@@ -345,7 +345,6 @@ void walk(int start,int end){
                 break;
             }
         }
-        
     }
 }
 
@@ -393,6 +392,8 @@ void go_farest(){
     }
     walk(0,goal_index);
 }
+
+/////////////////////  for big case
 
 int go_around(){
     
@@ -506,8 +507,154 @@ void big_go_near(){
     during_near=0;
 }
 
-void initial(){
+//////////////////////////for very big case
+
+class mystack{
+public:
+    int top=-1;
+    int* X=new int[num+3];
     
+    bool is_empty(){
+        if(top==-1){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    void push(int a){
+        top++;
+        X[top]=a;
+    }
+    int pop(){
+        top--;
+        return X[top+1];
+    }
+    mystack(){
+        top=-1;
+    }
+    ~mystack(){
+        delete []X;
+    }
+};
+
+void walk_inverse(int start){
+    
+    for (int i=0; i<=num; i++) {
+        all[i].distance_now = all[i].distance_charge;
+    }
+    tmp=all[start];
+    //find next,undone is better
+    int next=tmp.index;
+    bool check;
+    int z;
+    mystack s;
+    
+    for (int count= all[start].distance_now-1 ; count>=0; count--) {
+        check=0;
+        if (all[tmp.index].finish==0) {
+            all[tmp.index].finish=1;
+            undone--;
+        }
+        //find next
+         if (check==0) {
+             if (A[tmp.x-1][tmp.y]!=1) {
+                 z=index_chart[tmp.x-1][tmp.y];
+                 if(all[z].distance_now==count){
+                     next=z;
+                     if (all[z].finish==0){
+                         check=1;
+                     }
+                 }
+             }
+         }
+         if (check==0) {
+             if (A[tmp.x][tmp.y-1]!=1) {
+                 z=index_chart[tmp.x][tmp.y-1];
+                 if(all[z].distance_now==count){
+                     next=z;
+                     if (all[z].finish==0){
+                         check=1;
+                     }
+                 }
+             }
+         }
+        if (check==0) {
+            if (A[tmp.x+1][tmp.y]!=1) {
+                z=index_chart[tmp.x+1][tmp.y];
+                if(all[z].distance_now==count){
+                    next=z;
+                    if (all[z].finish==0){
+                        check=1;
+                    }
+                }
+            }
+        }
+       if (check==0) {
+           if (A[tmp.x][tmp.y+1]!=1) {
+               z=index_chart[tmp.x][tmp.y+1];
+               if(all[z].distance_now==count){
+                   next=z;
+                   if (all[z].finish==0){
+                       check=1;
+                   }
+               }
+           }
+       }
+        energy--;
+        tmp=all[next];
+        s.push(next);
+    }
+    // put location into ans[], and count ans_num
+    int p;
+    while (s.is_empty()==0) {
+        p=s.pop();
+        
+        tmp=all[p];
+        ans_tmp->nextans=new ans(tmp.x,tmp.y);
+        ans_tmp=ans_tmp->nextans;
+        ans_num++;
+    }
+    tmp=all[start];
+    return;
+}
+
+void go_farest_inverse(){
+    // pick farest
+    goal_index=0;
+    for (int i=0; i<=num; i++) {
+        if (all[i].distance_charge>all[goal_index].distance_charge) {
+            if (all[i].finish==0) {
+                goal_index=i;
+            }
+        }
+    }
+    //walk farest to charge
+    //store in stack and walk by pop
+    walk_inverse(goal_index);
+
+}
+void very_big_go_near(){
+    //only go around;
+    during_near=1;
+    while (is_any_undone()==1) {
+        int d=go_around();
+        if (d!=-1) {
+            walk_one_step(d);
+        }
+        else{
+            during_near=0;
+            return;
+        }
+        if (next_is_charge==1) {
+            during_near=0;
+            return;
+        }
+    }
+    during_near=0;
+}
+
+void initial(){
     char input;
     // initialize A=整張圖, A[x][y] = 一般座標位置
     A=new int*[column+2];
@@ -527,7 +674,6 @@ void initial(){
             }
         }
     }
-    
     // input finished  0:可走 1:不可走 2:充電站
     index_chart=new int*[column+1];
     for (int i=0; i<column+1; i++) {
@@ -538,7 +684,6 @@ void initial(){
             index_chart[x][y]=-1;
         }
     }
-    
     // collect all locations in  all[]
     all=new location[row*column+1];
     
@@ -558,7 +703,6 @@ void initial(){
             }
         }
     }
-    
     undone=num;
     
     C =new location*[column+2];
@@ -570,11 +714,9 @@ void initial(){
             C[x][y]=location(x,y,A[x][y]);
         }
     }
-
     G=new int[num+1];
     
     calculate_B(0);
-    
     for (int i=0; i<=num; i++) {
         all[i].distance_charge=G[i];
     }
@@ -583,7 +725,6 @@ void initial(){
 /////////////////// main
 
 int main() {
-    
     
     freopen("floor.data", "r", stdin);
     freopen("final.path", "w", stdout);
@@ -611,7 +752,7 @@ int main() {
         }
         // End
     }
-    else{
+    else if(num<=600000){
         while(undone>0){
             go_farest();
             big_go_near();
@@ -619,7 +760,16 @@ int main() {
             energy=energy_max;
         }
     }
+    else{
+        while(undone>0){
+            go_farest_inverse();
+            very_big_go_near();
+            comeback();
+            energy=energy_max;
+        }
+    }
     
+    cout<<bfs_num<<endl;
     output_ans();
     
     return 0;
